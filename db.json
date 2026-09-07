@@ -1,0 +1,54 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Админ Системы",
+      "email": "admin@example.com",
+      "password": "Admin123!",
+      "role": "admin",
+      "blocked": false,
+      "createdAt": "2026-09-07T10:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "name": "Демо Юзер",
+      "email": "demo@example.com",
+      "password": "Demo123!",
+      "role": "user",
+      "blocked": true,
+      "createdAt": "2026-09-07T10:00:00.000Z",
+      "updatedAt": "2026-09-07T13:23:23.641Z"
+    },
+    {
+      "name": "Ильшат",
+      "email": "ilshat@nasyrov.ru",
+      "password": "ilshat123",
+      "role": "user",
+      "blocked": false,
+      "createdAt": "2026-09-07T13:12:34.880Z",
+      "id": 4
+    }
+  ],
+  "tasks": [
+    {
+      "title": "перепроверить поиск",
+      "description": "надо проверить поиск на граничные значения",
+      "status": "todo",
+      "priority": "medium",
+      "userId": 4,
+      "createdAt": "2026-09-07T13:20:11.377Z",
+      "updatedAt": "2026-09-07T13:20:17.777Z",
+      "id": 4
+    },
+    {
+      "title": "завести ошибку про счетчик",
+      "description": "скачет счетчик после изменений в списке задач",
+      "status": "done",
+      "priority": "low",
+      "userId": 4,
+      "createdAt": "2026-09-07T13:20:58.793Z",
+      "updatedAt": "2026-09-07T13:25:00.873Z",
+      "id": 5
+    }
+  ]
+}

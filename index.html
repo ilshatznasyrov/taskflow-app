@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+        .error-message {
+            background: #fee; color: #c33; padding: 10px;
+            border-radius: 5px; margin-bottom: 20px;
+            border: 1px solid #fcc; display: none;
+        }
+        .error-message.show { display: block; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; color: #555; font-weight: 500; }
+        input {
+            width: 100%; padding: 12px;
+            border: 2px solid #ddd; border-radius: 5px;
+            font-size: 14px; transition: border-color 0.3s;
+        }
+        input:focus { outline: none; border-color: #667eea; }
+        input.error { border-color: #e74c3c; }
+        .error-text { color: #e74c3c; font-size: 12px; margin-top: 5px; display: none; }
+        .error-text.show { display: block; }
+        button {
+            width: 100%; padding: 12px;
+            background: #667eea; color: white;
+            border: none; border-radius: 5px;
+            font-size: 16px; cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover { background: #5568d3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .links { margin-top: 20px; text-align: center; }
+        .links a { color: #667eea; text-decoration: none; }
+        .links a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐞 TaskFlow</h1>
+        <p class="subtitle">Войдите в свой аккаунт</p>
+        
+        <div class="error-message" id="errorMessage" data-testid="error-message"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    placeholder="your.email@example.com"
+                    data-testid="email-input"
+                    required
+                >
+                <div class="error-text" id="emailError" data-testid="email-error">Введите корректный email</div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    placeholder="••••••••"
+                    data-testid="password-input"
+                    required
+                >
+                <div class="error-text" id="passwordError" data-testid="password-error">Пароль должен быть не менее 6 символов</div>
+            </div>
+
+            <button type="submit" data-testid="login-button">Войти</button>
+        </form>
+
+        <div class="links">
+            <p>Нет аккаунта? <a href="register.html" data-testid="register-link">Зарегистрироваться</a></p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        if (localStorage.getItem('currentUser')) {
+            window.location.href = 'dashboard.html';
+        }
+
+        const loginForm = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            errorMessage.classList.remove('show');
+            emailInput.classList.remove('error');
+            passwordInput.classList.remove('error');
+            document.getElementById('emailError').classList.remove('show');
+            document.getElementById('passwordError').classList.remove('show');
+            
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            let hasError = false;
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                document.getElementById('emailError').classList.add('show');
+                emailInput.classList.add('error');
+                hasError = true;
+            }
+
+            if (password.length < 6) {
+                document.getElementById('passwordError').classList.add('show');
+                passwordInput.classList.add('error');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            try {
+                const response = await fetch(`${API_URL}/users?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+                const users = await response.json();
+                const user = users[0];
+
+                if (user) {
+                    if (user.blocked) {
+                        errorMessage.textContent = 'Ваш аккаунт заблокирован. Обратитесь к администратору.';
+                        errorMessage.classList.add('show');
+                        return;
+                    }
+
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    
+                    const btn = document.querySelector('button[type="submit"]');
+                    btn.textContent = 'Загрузка...';
+                    btn.disabled = true;
+                    
+                    setTimeout(() => {
+                        if (user.role === 'admin') {
+                            window.location.href = 'admin.html';
+                        } else {
+                            window.location.href = 'dashboard.html';
+                        }
+                    }, 500);
+                } else {
+                    errorMessage.textContent = 'Неверный email или пароль';
+                    errorMessage.classList.add('show');
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Ошибка подключения к серверу';
+                errorMessage.classList.add('show');
+            }
+        });
+
+        emailInput.addEventListener('input', () => {
+            document.getElementById('emailError').classList.remove('show');
+            emailInput.classList.remove('error');
+        });
+
+        passwordInput.addEventListener('input', () => {
+            document.getElementById('passwordError').classList.remove('show');
+            passwordInput.classList.remove('error');
+        });
+    </script>
+</body>
+</html>
