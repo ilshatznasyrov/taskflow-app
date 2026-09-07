@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow - Админ-панель</title>
+    <title>TaskFlow — Админ-панель</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; min-height: 100vh; }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; padding: 20px 40px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
         .logo { font-size: 24px; font-weight: bold; }
         .nav-links { display: flex; gap: 20px; align-items: center; }
@@ -26,7 +23,7 @@
         .user-item { padding: 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 20px; transition: background 0.2s; }
         .user-item:hover { background: #f9f9f9; }
         .user-item:last-child { border-bottom: none; }
-        .user-info { flex: 1; }
+        .user-info-block { flex: 1; }
         .user-name { font-weight: 600; margin-bottom: 5px; }
         .user-email { color: #666; font-size: 14px; }
         .user-meta { display: flex; gap: 10px; align-items: center; }
@@ -46,9 +43,11 @@
         .btn-delete { background: #e74c3c; color: white; }
         .btn-delete:hover { background: #c0392b; }
         .empty-state { text-align: center; padding: 60px 20px; color: #999; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
-        .modal.show { display: flex; }
-        .modal-content { background: white; padding: 40px; border-radius: 10px; width: 100%; max-width: 500px; }
+
+        /* Стили для модальных окон */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; animation: fadeIn 0.2s; }
+        .modal-overlay.show { display: flex; }
+        .modal-content { background: white; padding: 40px; border-radius: 10px; width: 100%; max-width: 500px; animation: slideUp 0.3s; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .modal-title { font-size: 24px; color: #333; }
         .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
@@ -62,6 +61,29 @@
         .search-box { margin-bottom: 20px; }
         .search-box input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px; }
         .search-box input:focus { outline: none; border-color: #667eea; }
+
+        /* Стили для confirm модалки */
+        .confirm-modal .modal-content { max-width: 400px; text-align: center; }
+        .confirm-icon { font-size: 48px; margin-bottom: 20px; }
+        .confirm-message { font-size: 16px; color: #333; margin-bottom: 30px; line-height: 1.5; }
+        .confirm-buttons { display: flex; gap: 10px; justify-content: center; }
+        .confirm-btn { padding: 10px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; transition: all 0.3s; }
+        .confirm-btn-cancel { background: #e0e0e0; color: #333; }
+        .confirm-btn-cancel:hover { background: #d0d0d0; }
+        .confirm-btn-ok { background: #e74c3c; color: white; }
+        .confirm-btn-ok:hover { background: #c0392b; }
+        .confirm-btn-ok.success { background: #27ae60; }
+        .confirm-btn-ok.success:hover { background: #229954; }
+
+        /* Стили для alert модалки */
+        .alert-modal .modal-content { max-width: 400px; text-align: center; }
+        .alert-icon { font-size: 48px; margin-bottom: 20px; }
+        .alert-message { font-size: 16px; color: #333; margin-bottom: 30px; line-height: 1.5; }
+        .alert-btn { padding: 10px 32px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; transition: background 0.3s; }
+        .alert-btn:hover { background: #5568d3; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -70,45 +92,32 @@
             <div class="logo">🐞 TaskFlow Admin</div>
             <div class="nav-links">
                 <a href="dashboard.html" data-testid="to-dashboard">К задачам</a>
-                <a href="#" onclick="logout()" data-testid="logout-button">Выйти</a>
+                <a href="#" onclick="window.logout()" data-testid="logout-button">Выйти</a>
             </div>
         </div>
     </div>
 
     <div class="container">
         <div class="stats">
-            <div class="stat-card">
-                <div class="stat-value" id="totalUsers" data-testid="stat-total-users">0</div>
-                <div class="stat-label">Всего пользователей</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="activeUsers" data-testid="stat-active-users">0</div>
-                <div class="stat-label">Активных</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="blockedUsers" data-testid="stat-blocked-users">0</div>
-                <div class="stat-label">Заблокированных</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="adminUsers" data-testid="stat-admin-users">0</div>
-                <div class="stat-label">Администраторов</div>
-            </div>
+            <div class="stat-card"><div class="stat-value" id="totalUsers" data-testid="stat-total-users">0</div><div class="stat-label">Всего пользователей</div></div>
+            <div class="stat-card"><div class="stat-value" id="activeUsers" data-testid="stat-active-users">0</div><div class="stat-label">Активных</div></div>
+            <div class="stat-card"><div class="stat-value" id="blockedUsers" data-testid="stat-blocked-users">0</div><div class="stat-label">Заблокированных</div></div>
+            <div class="stat-card"><div class="stat-value" id="adminUsers" data-testid="stat-admin-users">0</div><div class="stat-label">Администраторов</div></div>
         </div>
 
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="🔍 Поиск по имени или email..." data-testid="search-users">
         </div>
 
-        <div class="users-container" id="usersList" data-testid="users-list">
-        </div>
+        <div class="users-container" id="usersList" data-testid="users-list"></div>
     </div>
 
-    <!-- Modal для редактирования -->
-    <div class="modal" id="editModal">
+    <!-- Модальное окно редактирования пользователя -->
+    <div class="modal-overlay" id="editModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title" data-testid="modal-title">Редактировать пользователя</h2>
-                <button class="close-btn" onclick="closeModal()" data-testid="close-modal">&times;</button>
+                <button class="close-btn" onclick="window.closeModal()" data-testid="close-modal">&times;</button>
             </div>
             <form id="editForm">
                 <input type="hidden" id="editUserId">
@@ -136,74 +145,157 @@
         </div>
     </div>
 
+    <!-- Универсальное модальное окно подтверждения -->
+    <div class="modal-overlay confirm-modal" id="confirmModal">
+        <div class="modal-content">
+            <div class="confirm-icon" id="confirmIcon">⚠️</div>
+            <div class="confirm-message" id="confirmMessage">Вы уверены?</div>
+            <div class="confirm-buttons">
+                <button class="confirm-btn confirm-btn-cancel" id="confirmCancel">Отмена</button>
+                <button class="confirm-btn confirm-btn-ok" id="confirmOk">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Универсальное модальное окно alert -->
+    <div class="modal-overlay alert-modal" id="alertModal">
+        <div class="modal-content">
+            <div class="alert-icon" id="alertIcon">ℹ️</div>
+            <div class="alert-message" id="alertMessage">Сообщение</div>
+            <button class="alert-btn" id="alertOk">OK</button>
+        </div>
+    </div>
+
     <script>
-        const API_URL = 'http://localhost:3000';
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        const SUPABASE_URL = 'https://xttideancifotjdmrhdg.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dGlkZWFuY2lmb3RqZG1yaGRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3ODUxOTksImV4cCI6MjEwNDM2MTE5OX0.N-EiBzZApqoIZfsakCD5mOmttc4egcCBWgWZHw7qpmc'; 
         
-        if (!currentUser || currentUser.role !== 'admin') {
-            window.location.href = 'index.html';
-        }
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser || currentUser.role !== 'admin') window.location.href = 'index.html';
 
         let users = [];
 
+        // ==========================================
+        // УНИВЕРСАЛЬНЫЕ ФУНКЦИИ ДЛЯ МОДАЛОК
+        // ==========================================
+        
+        window.showConfirm = function(message, options = {}) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('confirmModal');
+                const icon = document.getElementById('confirmIcon');
+                const msg = document.getElementById('confirmMessage');
+                const okBtn = document.getElementById('confirmOk');
+                const cancelBtn = document.getElementById('confirmCancel');
+
+                icon.textContent = options.icon || '⚠️';
+                msg.textContent = message;
+                
+                if (options.type === 'success') {
+                    okBtn.classList.add('success');
+                } else {
+                    okBtn.classList.remove('success');
+                }
+
+                modal.classList.add('show');
+
+                const cleanup = () => {
+                    modal.classList.remove('show');
+                    okBtn.onclick = null;
+                    cancelBtn.onclick = null;
+                };
+
+                okBtn.onclick = () => {
+                    cleanup();
+                    resolve(true);
+                };
+
+                cancelBtn.onclick = () => {
+                    cleanup();
+                    resolve(false);
+                };
+            });
+        };
+
+        window.showAlert = function(message, options = {}) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('alertModal');
+                const icon = document.getElementById('alertIcon');
+                const msg = document.getElementById('alertMessage');
+                const okBtn = document.getElementById('alertOk');
+
+                icon.textContent = options.icon || 'ℹ️';
+                msg.textContent = message;
+
+                modal.classList.add('show');
+
+                const cleanup = () => {
+                    modal.classList.remove('show');
+                    okBtn.onclick = null;
+                };
+
+                okBtn.onclick = () => {
+                    cleanup();
+                    resolve();
+                };
+            });
+        };
+
+        // ==========================================
+        // ОСНОВНЫЕ ФУНКЦИИ
+        // ==========================================
+
+        window.logout = function() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        };
+
+        window.closeModal = function() {
+            document.getElementById('editModal').classList.remove('show');
+        };
+
         async function loadUsers() {
-            try {
-                const response = await fetch(`${API_URL}/users`);
-                users = await response.json();
-                renderUsers();
-                updateStats();
-            } catch (error) {
-                console.error('Ошибка загрузки пользователей:', error);
+            const { data, error } = await supabaseClient
+                .from('users')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) {
+                console.error("❌ Ошибка загрузки пользователей:", error);
+                return;
             }
+            
+            users = data || [];
+            renderUsers();
+            updateStats();
         }
 
         function renderUsers() {
             const search = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = users.filter(u => u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search));
+            const list = document.getElementById('usersList');
             
-            let filteredUsers = users.filter(user => 
-                user.name.toLowerCase().includes(search) || 
-                user.email.toLowerCase().includes(search)
-            );
-
-            const usersList = document.getElementById('usersList');
-            
-            if (filteredUsers.length === 0) {
-                usersList.innerHTML = `
-                    <div class="empty-state">
-                        <div style="font-size: 48px; margin-bottom: 20px;">👥</div>
-                        <h3>Пользователи не найдены</h3>
-                    </div>
-                `;
+            if (filtered.length === 0) {
+                list.innerHTML = `<div class="empty-state"><h3>Пользователи не найдены</h3></div>`;
                 return;
             }
 
-            usersList.innerHTML = filteredUsers.map(user => `
-                <div class="user-item" data-user-id="${user.id}" data-testid="user-${user.id}">
-                    <div class="user-info">
-                        <div class="user-name">${escapeHtml(user.name)}</div>
-                        <div class="user-email">${escapeHtml(user.email)}</div>
+            list.innerHTML = filtered.map(u => `
+                <div class="user-item" data-user-id="${u.id}" data-testid="user-${u.id}">
+                    <div class="user-info-block">
+                        <div class="user-name">${escapeHtml(u.name)}</div>
+                        <div class="user-email">${escapeHtml(u.email)}</div>
                     </div>
                     <div class="user-meta">
-                        <span class="badge ${user.role === 'admin' ? 'badge-admin' : 'badge-user'}">
-                            ${user.role === 'admin' ? 'Админ' : 'Пользователь'}
-                        </span>
-                        <span class="badge ${user.blocked ? 'badge-blocked' : 'badge-active'}">
-                            ${user.blocked ? 'Заблокирован' : 'Активен'}
-                        </span>
+                        <span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-user'}">${u.role === 'admin' ? 'Админ' : 'Пользователь'}</span>
+                        <span class="badge ${u.blocked ? 'badge-blocked' : 'badge-active'}">${u.blocked ? 'Заблокирован' : 'Активен'}</span>
                     </div>
                     <div class="user-actions">
-                        ${user.id !== currentUser.id ? `
-                            <button class="btn btn-edit" onclick="editUser(${user.id})" data-testid="edit-user-${user.id}">
-                                Редактировать
-                            </button>
-                            <button class="btn ${user.blocked ? 'btn-unblock' : 'btn-block'}" 
-                                    onclick="toggleBlock(${user.id})" 
-                                    data-testid="block-user-${user.id}">
-                                ${user.blocked ? 'Разблокировать' : 'Заблокировать'}
-                            </button>
-                            <button class="btn btn-delete" onclick="deleteUser(${user.id})" data-testid="delete-user-${user.id}">
-                                Удалить
-                            </button>
+                        ${u.id !== currentUser.id ? `
+                            <button class="btn btn-edit" onclick="window.editUser(${u.id})" data-testid="edit-user-${u.id}">Редактировать</button>
+                            <button class="btn ${u.blocked ? 'btn-unblock' : 'btn-block'}" onclick="window.toggleBlock(${u.id})" data-testid="block-user-${u.id}">${u.blocked ? 'Разблокировать' : 'Заблокировать'}</button>
+                            <button class="btn btn-delete" onclick="window.deleteUser(${u.id})" data-testid="delete-user-${u.id}">Удалить</button>
                         ` : '<span style="color: #999; font-size: 13px;">Это вы</span>'}
                     </div>
                 </div>
@@ -211,131 +303,109 @@
         }
 
         function updateStats() {
-            const total = users.length;
-            const active = users.filter(u => !u.blocked).length;
-            const blocked = users.filter(u => u.blocked).length;
-            const admins = users.filter(u => u.role === 'admin').length;
-
-            document.getElementById('totalUsers').textContent = total;
-            document.getElementById('activeUsers').textContent = active;
-            document.getElementById('blockedUsers').textContent = blocked;
-            document.getElementById('adminUsers').textContent = admins;
+            document.getElementById('totalUsers').textContent = users.length;
+            document.getElementById('activeUsers').textContent = users.filter(u => !u.blocked).length;
+            document.getElementById('blockedUsers').textContent = users.filter(u => u.blocked).length;
+            document.getElementById('adminUsers').textContent = users.filter(u => u.role === 'admin').length;
         }
 
-        function editUser(id) {
-            const user = users.find(u => u.id === id);
-            if (!user) return;
-
-            document.getElementById('editUserId').value = user.id;
-            document.getElementById('editName').value = user.name;
-            document.getElementById('editEmail').value = user.email;
+        window.editUser = function(id) {
+            const u = users.find(x => x.id === id);
+            if (!u) return;
+            document.getElementById('editUserId').value = u.id;
+            document.getElementById('editName').value = u.name;
+            document.getElementById('editEmail').value = u.email;
             document.getElementById('editPassword').value = '';
-            document.getElementById('editRole').value = user.role;
+            document.getElementById('editRole').value = u.role;
             document.getElementById('editModal').classList.add('show');
-        }
-
-        function closeModal() {
-            document.getElementById('editModal').classList.remove('show');
-        }
+        };
 
         document.getElementById('editForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const id = parseInt(document.getElementById('editUserId').value);
-            const user = users.find(u => u.id === id);
-            if (!user) return;
+            const u = users.find(x => x.id === id);
+            if (!u) return;
 
-            const updatedUser = {
-                ...user,
+            const updates = {
                 name: document.getElementById('editName').value.trim(),
                 email: document.getElementById('editEmail').value.trim(),
                 role: document.getElementById('editRole').value,
-                updatedAt: new Date().toISOString()
+                updated_at: new Date().toISOString()
             };
+            const pwd = document.getElementById('editPassword').value;
+            if (pwd) updates.password = pwd;
 
-            const password = document.getElementById('editPassword').value;
-            if (password) {
-                updatedUser.password = password;
+            const { error } = await supabaseClient
+                .from('users')
+                .update(updates)
+                .eq('id', id);
+
+            if (error) {
+                console.error("❌ Ошибка обновления:", error);
+                await window.showAlert('Ошибка при сохранении: ' + error.message, { icon: '❌' });
+                return;
             }
 
-            try {
-                await fetch(`${API_URL}/users/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updatedUser)
-                });
-                
-                closeModal();
-                await loadUsers();
-            } catch (error) {
-                console.error('Ошибка обновления:', error);
-            }
+            window.closeModal();
+            await window.showAlert('Пользователь успешно обновлён', { icon: '✅' });
+            await loadUsers();
         });
 
-        async function toggleBlock(id) {
-            const user = users.find(u => u.id === id);
-            if (!user) return;
+        window.toggleBlock = async function(id) {
+            const u = users.find(x => x.id === id);
+            if (!u) return;
+            
+            const action = u.blocked ? 'Разблокировать' : 'Заблокировать';
+            const confirmed = await window.showConfirm(`${action} пользователя ${u.name}?`, { 
+                icon: u.blocked ? '🔓' : '🔒' 
+            });
+            
+            if (!confirmed) return;
 
-            user.blocked = !user.blocked;
-            user.updatedAt = new Date().toISOString();
+            const { error } = await supabaseClient
+                .from('users')
+                .update({ blocked: !u.blocked, updated_at: new Date().toISOString() })
+                .eq('id', id);
 
-            try {
-                await fetch(`${API_URL}/users/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(user)
-                });
-                await loadUsers();
-            } catch (error) {
-                console.error('Ошибка блокировки:', error);
+            if (error) {
+                console.error("❌ Ошибка блокировки:", error);
+                await window.showAlert('Ошибка: ' + error.message, { icon: '❌' });
+                return;
             }
-        }
+            
+            await window.showAlert(`Пользователь ${action.toLowerCase()}`, { icon: '✅' });
+            await loadUsers();
+        };
 
-        async function deleteUser(id) {
-            if (!confirm('Вы уверены, что хотите удалить этого пользователя? Все его задачи также будут удалены.')) return;
+        window.deleteUser = async function(id) {
+            const u = users.find(x => x.id === id);
+            const confirmed = await window.showConfirm(`Удалить пользователя ${u.name} и все его задачи?`, { 
+                icon: '🗑️' 
+            });
+            
+            if (!confirmed) return;
+            
+            const { error } = await supabaseClient
+                .from('users')
+                .delete()
+                .eq('id', id);
 
-            try {
-                await fetch(`${API_URL}/users/${id}`, { method: 'DELETE' });
-                
-                const userTasks = tasks.filter(t => t.userId === id);
-                for (const task of userTasks) {
-                    await fetch(`${API_URL}/tasks/${task.id}`, { method: 'DELETE' });
-                }
-
-                await loadUsers();
-            } catch (error) {
-                console.error('Ошибка удаления:', error);
+            if (error) {
+                console.error("❌ Ошибка удаления:", error);
+                await window.showAlert('Ошибка при удалении: ' + error.message, { icon: '❌' });
+                return;
             }
-        }
+            
+            await window.showAlert('Пользователь удалён', { icon: '✅' });
+            await loadUsers();
+        };
 
-        function logout() {
-            localStorage.removeItem('currentUser');
-            window.location.href = 'index.html';
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+        function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
 
         document.getElementById('searchInput').addEventListener('input', renderUsers);
-        document.getElementById('editModal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('editModal')) closeModal();
-        });
-
-        let tasks = [];
-        async function loadTasks() {
-            try {
-                const response = await fetch(`${API_URL}/tasks`);
-                tasks = await response.json();
-            } catch (error) {
-                console.error('Ошибка загрузки задач:', error);
-            }
-        }
+        document.getElementById('editModal').addEventListener('click', e => { if (e.target.id === 'editModal') window.closeModal(); });
 
         loadUsers();
-        loadTasks();
     </script>
 </body>
 </html>

@@ -3,51 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow - Login</title>
+    <title>TaskFlow — Вход в систему</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 400px;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 400px; }
         h1 { text-align: center; color: #333; margin-bottom: 10px; }
         .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
-        .error-message {
-            background: #fee; color: #c33; padding: 10px;
-            border-radius: 5px; margin-bottom: 20px;
-            border: 1px solid #fcc; display: none;
-        }
+        .error-message { background: #fee; color: #c33; padding: 10px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #fcc; display: none; }
         .error-message.show { display: block; }
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 5px; color: #555; font-weight: 500; }
-        input {
-            width: 100%; padding: 12px;
-            border: 2px solid #ddd; border-radius: 5px;
-            font-size: 14px; transition: border-color 0.3s;
-        }
+        input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px; transition: border-color 0.3s; }
         input:focus { outline: none; border-color: #667eea; }
         input.error { border-color: #e74c3c; }
         .error-text { color: #e74c3c; font-size: 12px; margin-top: 5px; display: none; }
         .error-text.show { display: block; }
-        button {
-            width: 100%; padding: 12px;
-            background: #667eea; color: white;
-            border: none; border-radius: 5px;
-            font-size: 16px; cursor: pointer;
-            transition: background 0.3s;
-        }
+        button { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
         button:hover { background: #5568d3; }
         button:disabled { background: #ccc; cursor: not-allowed; }
         .links { margin-top: 20px; text-align: center; }
@@ -59,127 +32,120 @@
     <div class="container">
         <h1>🐞 TaskFlow</h1>
         <p class="subtitle">Войдите в свой аккаунт</p>
-        
         <div class="error-message" id="errorMessage" data-testid="error-message"></div>
-
         <form id="loginForm">
             <div class="form-group">
                 <label for="email">Email</label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
-                    placeholder="your.email@example.com"
-                    data-testid="email-input"
-                    required
-                >
+                <input type="email" id="email" name="email" placeholder="your.email@example.com" data-testid="email-input" required>
                 <div class="error-text" id="emailError" data-testid="email-error">Введите корректный email</div>
             </div>
-
             <div class="form-group">
                 <label for="password">Пароль</label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    name="password" 
-                    placeholder="••••••••"
-                    data-testid="password-input"
-                    required
-                >
+                <input type="password" id="password" name="password" placeholder="••••••••" data-testid="password-input" required>
                 <div class="error-text" id="passwordError" data-testid="password-error">Пароль должен быть не менее 6 символов</div>
             </div>
-
             <button type="submit" data-testid="login-button">Войти</button>
         </form>
-
         <div class="links">
             <p>Нет аккаунта? <a href="register.html" data-testid="register-link">Зарегистрироваться</a></p>
         </div>
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000';
+        // ==========================================
+        // 1. ДАННЫЕ SUPABASE 
+        // ==========================================
+        const SUPABASE_URL = 'https://xttideancifotjdmrhdg.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dGlkZWFuY2lmb3RqZG1yaGRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3ODUxOTksImV4cCI6MjEwNDM2MTE5OX0.N-EiBzZApqoIZfsakCD5mOmttc4egcCBWgWZHw7qpmc'; 
+        // ==========================================
 
+        // 2. Инициализация клиента (уникальное имя)
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // 3. Если уже авторизован, перекидываем на дашборд
         if (localStorage.getItem('currentUser')) {
             window.location.href = 'dashboard.html';
         }
 
         const loginForm = document.getElementById('loginForm');
         const errorMessage = document.getElementById('errorMessage');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
 
         loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+            // ОСТАНАВЛИВАЕМ стандартную отправку формы (чтобы не было ?email=... в URL)
+            e.preventDefault(); 
             
             errorMessage.classList.remove('show');
-            emailInput.classList.remove('error');
-            passwordInput.classList.remove('error');
-            document.getElementById('emailError').classList.remove('show');
-            document.getElementById('passwordError').classList.remove('show');
             
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-            let hasError = false;
-
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            
+            // Простая валидация на клиенте
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                 document.getElementById('emailError').classList.add('show');
-                emailInput.classList.add('error');
-                hasError = true;
+                document.getElementById('email').classList.add('error');
+                return;
             }
-
             if (password.length < 6) {
                 document.getElementById('passwordError').classList.add('show');
-                passwordInput.classList.add('error');
-                hasError = true;
+                document.getElementById('password').classList.add('error');
+                return;
             }
 
-            if (hasError) return;
+            const btn = document.querySelector('button[type="submit"]');
+            btn.textContent = 'Проверка...';
+            btn.disabled = true;
 
-            try {
-                const response = await fetch(`${API_URL}/users?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
-                const users = await response.json();
-                const user = users[0];
+            // 4. Запрос к базе данных (используем maybeSingle для безопасности)
+            const { data: user, error } = await supabaseClient
+                .from('users')
+                .select('*')
+                .eq('email', email)
+                .eq('password', password)
+                .maybeSingle();
 
-                if (user) {
-                    if (user.blocked) {
-                        errorMessage.textContent = 'Ваш аккаунт заблокирован. Обратитесь к администратору.';
-                        errorMessage.classList.add('show');
-                        return;
-                    }
-
-                    localStorage.setItem('currentUser', JSON.stringify(user));
-                    
-                    const btn = document.querySelector('button[type="submit"]');
-                    btn.textContent = 'Загрузка...';
-                    btn.disabled = true;
-                    
-                    setTimeout(() => {
-                        if (user.role === 'admin') {
-                            window.location.href = 'admin.html';
-                        } else {
-                            window.location.href = 'dashboard.html';
-                        }
-                    }, 500);
-                } else {
-                    errorMessage.textContent = 'Неверный email или пароль';
-                    errorMessage.classList.add('show');
-                }
-            } catch (error) {
-                errorMessage.textContent = 'Ошибка подключения к серверу';
+            // 5. Обработка ошибок от Supabase
+            if (error) {
+                console.error("❌ Ошибка Supabase при входе:", error);
+                errorMessage.textContent = 'Ошибка базы данных: ' + error.message;
                 errorMessage.classList.add('show');
+                btn.textContent = 'Войти';
+                btn.disabled = false;
+                return;
             }
+
+            // 6. Если пользователь не найден
+            if (!user) {
+                errorMessage.textContent = 'Неверный email или пароль';
+                errorMessage.classList.add('show');
+                btn.textContent = 'Войти';
+                btn.disabled = false;
+                return;
+            }
+
+            // 7. Проверка на блокировку
+            if (user.blocked) {
+                errorMessage.textContent = 'Ваш аккаунт заблокирован. Обратитесь к администратору.';
+                errorMessage.classList.add('show');
+                btn.textContent = 'Войти';
+                btn.disabled = false;
+                return;
+            }
+
+            // 8. Успешный вход
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            
+            // Небольшая задержка для плавности UI
+            setTimeout(() => {
+                window.location.href = user.role === 'admin' ? 'admin.html' : 'dashboard.html';
+            }, 300);
         });
 
-        emailInput.addEventListener('input', () => {
-            document.getElementById('emailError').classList.remove('show');
-            emailInput.classList.remove('error');
-        });
-
-        passwordInput.addEventListener('input', () => {
-            document.getElementById('passwordError').classList.remove('show');
-            passwordInput.classList.remove('error');
+        // Убираем ошибки при вводе текста
+        ['email', 'password'].forEach(id => {
+            document.getElementById(id).addEventListener('input', () => {
+                document.getElementById(id).classList.remove('error');
+                document.getElementById(id + 'Error').classList.remove('show');
+            });
         });
     </script>
 </body>

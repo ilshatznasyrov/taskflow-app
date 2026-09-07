@@ -3,66 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow - Register</title>
+    <title>TaskFlow — Регистрация</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 450px;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 450px; }
         h1 { text-align: center; color: #333; margin-bottom: 10px; }
         .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
-        .error-message {
-            background: #fee; color: #c33; padding: 10px;
-            border-radius: 5px; margin-bottom: 20px;
-            border: 1px solid #fcc; display: none;
-        }
-        .error-message.show { display: block; }
-        .success-message {
-            background: #efe; color: #3c3; padding: 10px;
-            border-radius: 5px; margin-bottom: 20px;
-            border: 1px solid #cfc; display: none;
-        }
-        .success-message.show { display: block; }
+        .error-message, .success-message { padding: 10px; border-radius: 5px; margin-bottom: 20px; display: none; }
+        .error-message { background: #fee; color: #c33; border: 1px solid #fcc; }
+        .success-message { background: #efe; color: #3c3; border: 1px solid #cfc; }
+        .error-message.show, .success-message.show { display: block; }
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 5px; color: #555; font-weight: 500; }
-        input {
-            width: 100%; padding: 12px;
-            border: 2px solid #ddd; border-radius: 5px;
-            font-size: 14px; transition: border-color 0.3s;
-        }
+        input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px; transition: border-color 0.3s; }
         input:focus { outline: none; border-color: #667eea; }
         input.error { border-color: #e74c3c; }
         .error-text { color: #e74c3c; font-size: 12px; margin-top: 5px; display: none; }
         .error-text.show { display: block; }
-        .password-strength {
-            height: 4px; background: #ddd;
-            margin-top: 5px; border-radius: 2px; overflow: hidden;
-        }
+        .password-strength { height: 4px; background: #ddd; margin-top: 5px; border-radius: 2px; overflow: hidden; }
         .password-strength-bar { height: 100%; width: 0; transition: all 0.3s; }
         .password-strength-bar.weak { width: 33%; background: #e74c3c; }
         .password-strength-bar.medium { width: 66%; background: #f39c12; }
         .password-strength-bar.strong { width: 100%; background: #27ae60; }
-        button {
-            width: 100%; padding: 12px;
-            background: #667eea; color: white;
-            border: none; border-radius: 5px;
-            font-size: 16px; cursor: pointer;
-            transition: background 0.3s;
-        }
+        button { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
         button:hover { background: #5568d3; }
         button:disabled { background: #ccc; cursor: not-allowed; }
         .links { margin-top: 20px; text-align: center; }
@@ -74,110 +39,71 @@
     <div class="container">
         <h1>🐞 TaskFlow</h1>
         <p class="subtitle">Создайте новый аккаунт</p>
-        
         <div class="error-message" id="errorMessage" data-testid="error-message"></div>
         <div class="success-message" id="successMessage" data-testid="success-message"></div>
-
         <form id="registerForm">
             <div class="form-group">
                 <label for="name">Имя</label>
-                <input 
-                    type="text" 
-                    id="name" 
-                    name="name" 
-                    placeholder="Иван Иванов"
-                    data-testid="name-input"
-                    required
-                >
+                <input type="text" id="name" name="name" placeholder="Иван Иванов" data-testid="name-input" required>
                 <div class="error-text" id="nameError" data-testid="name-error">Имя должно содержать не менее 2 символов</div>
             </div>
-
             <div class="form-group">
                 <label for="email">Email</label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
-                    placeholder="your.email@example.com"
-                    data-testid="email-input"
-                    required
-                >
+                <input type="email" id="email" name="email" placeholder="your.email@example.com" data-testid="email-input" required>
                 <div class="error-text" id="emailError" data-testid="email-error">Введите корректный email</div>
             </div>
-
             <div class="form-group">
                 <label for="password">Пароль</label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    name="password" 
-                    placeholder="••••••••"
-                    data-testid="password-input"
-                    required
-                >
-                <div class="password-strength">
-                    <div class="password-strength-bar" id="strengthBar" data-testid="password-strength"></div>
-                </div>
+                <input type="password" id="password" name="password" placeholder="••••••••" data-testid="password-input" required>
+                <div class="password-strength"><div class="password-strength-bar" id="strengthBar" data-testid="password-strength"></div></div>
                 <div class="error-text" id="passwordError" data-testid="password-error">Пароль должен быть не менее 6 символов</div>
             </div>
-
             <div class="form-group">
                 <label for="confirmPassword">Подтвердите пароль</label>
-                <input 
-                    type="password" 
-                    id="confirmPassword" 
-                    name="confirmPassword" 
-                    placeholder="••••••••"
-                    data-testid="confirm-password-input"
-                    required
-                >
+                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="••••••••" data-testid="confirm-password-input" required>
                 <div class="error-text" id="confirmPasswordError" data-testid="confirm-password-error">Пароли не совпадают</div>
             </div>
-
             <button type="submit" data-testid="register-button">Зарегистрироваться</button>
         </form>
-
         <div class="links">
             <p>Уже есть аккаунт? <a href="index.html" data-testid="login-link">Войти</a></p>
         </div>
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000';
+        const SUPABASE_URL = 'https://xttideancifotjdmrhdg.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dGlkZWFuY2lmb3RqZG1yaGRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3ODUxOTksImV4cCI6MjEwNDM2MTE5OX0.N-EiBzZApqoIZfsakCD5mOmttc4egcCBWgWZHw7qpmc'; 
+        
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        if (localStorage.getItem('currentUser')) {
-            window.location.href = 'dashboard.html';
-        }
+        if (localStorage.getItem('currentUser')) window.location.href = 'dashboard.html';
 
         const registerForm = document.getElementById('registerForm');
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
         const passwordInput = document.getElementById('password');
-        const strengthBar = document.getElementById('strengthBar');
 
         passwordInput.addEventListener('input', (e) => {
-            const password = e.target.value;
+            const p = e.target.value;
             let strength = 0;
-
-            if (password.length >= 6) strength++;
-            if (password.length >= 10) strength++;
-            if (/[A-Z]/.test(password)) strength++;
-            if (/[0-9]/.test(password)) strength++;
-            if (/[^A-Za-z0-9]/.test(password)) strength++;
-
-            strengthBar.className = 'password-strength-bar';
-            if (strength <= 2) strengthBar.classList.add('weak');
-            else if (strength <= 4) strengthBar.classList.add('medium');
-            else strengthBar.classList.add('strong');
+            if (p.length >= 6) strength++;
+            if (p.length >= 10) strength++;
+            if (/[A-Z]/.test(p)) strength++;
+            if (/[0-9]/.test(p)) strength++;
+            if (/[^A-Za-z0-9]/.test(p)) strength++;
+            const bar = document.getElementById('strengthBar');
+            bar.className = 'password-strength-bar';
+            if (strength <= 2) bar.classList.add('weak');
+            else if (strength <= 4) bar.classList.add('medium');
+            else bar.classList.add('strong');
         });
 
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             errorMessage.classList.remove('show');
             successMessage.classList.remove('show');
-            document.querySelectorAll('input').forEach(input => input.classList.remove('error'));
-            document.querySelectorAll('.error-text').forEach(error => error.classList.remove('show'));
+            document.querySelectorAll('input').forEach(i => i.classList.remove('error'));
+            document.querySelectorAll('.error-text').forEach(err => err.classList.remove('show'));
             
             const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.trim();
@@ -185,84 +111,67 @@
             const confirmPassword = document.getElementById('confirmPassword').value;
             let hasError = false;
 
-            if (name.length < 2) {
-                document.getElementById('nameError').classList.add('show');
-                document.getElementById('name').classList.add('error');
-                hasError = true;
-            }
-
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                document.getElementById('emailError').classList.add('show');
-                document.getElementById('email').classList.add('error');
-                hasError = true;
-            }
-
-            if (password.length < 6) {
-                document.getElementById('passwordError').classList.add('show');
-                passwordInput.classList.add('error');
-                hasError = true;
-            }
-
-            if (password !== confirmPassword) {
-                document.getElementById('confirmPasswordError').classList.add('show');
-                document.getElementById('confirmPassword').classList.add('error');
-                hasError = true;
-            }
-
+            if (name.length < 2) { document.getElementById('nameError').classList.add('show'); document.getElementById('name').classList.add('error'); hasError = true; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { document.getElementById('emailError').classList.add('show'); document.getElementById('email').classList.add('error'); hasError = true; }
+            if (password.length < 6) { document.getElementById('passwordError').classList.add('show'); passwordInput.classList.add('error'); hasError = true; }
+            if (password !== confirmPassword) { document.getElementById('confirmPasswordError').classList.add('show'); document.getElementById('confirmPassword').classList.add('error'); hasError = true; }
+            
             if (hasError) return;
 
-            try {
-                const checkResponse = await fetch(`${API_URL}/users?email=${encodeURIComponent(email)}`);
-                const existingUsers = await checkResponse.json();
-                
-                if (existingUsers.length > 0) {
-                    errorMessage.textContent = 'Пользователь с таким email уже существует';
-                    errorMessage.classList.add('show');
-                    document.getElementById('email').classList.add('error');
-                    return;
-                }
+            const btn = document.querySelector('button[type="submit"]');
+            btn.textContent = 'Создание...';
+            btn.disabled = true;
 
-                const newUser = {
-                    name,
-                    email,
-                    password,
-                    role: 'user',
-                    blocked: false,
-                    createdAt: new Date().toISOString()
-                };
+            const { data: existing } = await supabaseClient
+                .from('users')
+                .select('id')
+                .eq('email', email)
+                .maybeSingle();
 
-                const createResponse = await fetch(`${API_URL}/users`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newUser)
-                });
-
-                const createdUser = await createResponse.json();
-
-                successMessage.textContent = 'Регистрация успешна! Перенаправление...';
-                successMessage.classList.add('show');
-
-                const btn = document.querySelector('button[type="submit"]');
-                btn.textContent = 'Загрузка...';
-                btn.disabled = true;
-
-                setTimeout(() => {
-                    localStorage.setItem('currentUser', JSON.stringify(createdUser));
-                    window.location.href = 'dashboard.html';
-                }, 1500);
-            } catch (error) {
-                errorMessage.textContent = 'Ошибка подключения к серверу';
+            if (existing) {
+                errorMessage.textContent = 'Пользователь с таким email уже существует';
                 errorMessage.classList.add('show');
+                document.getElementById('email').classList.add('error');
+                btn.textContent = 'Зарегистрироваться';
+                btn.disabled = false;
+                return;
             }
+
+            const { data: newUser, error: insertError } = await supabaseClient
+                .from('users')
+                .insert([{ 
+                    name: name, 
+                    email: email, 
+                    password: password, 
+                    role: 'user', 
+                    blocked: false 
+                }])
+                .select()
+                .maybeSingle();
+
+            if (insertError) {
+                console.error("❌ Ошибка регистрации:", insertError);
+                errorMessage.textContent = 'Ошибка: ' + insertError.message;
+                errorMessage.classList.add('show');
+                btn.textContent = 'Зарегистрироваться';
+                btn.disabled = false;
+                return;
+            }
+
+            successMessage.textContent = 'Успешно! Перенаправление...';
+            successMessage.classList.add('show');
+            
+            setTimeout(() => {
+                localStorage.setItem('currentUser', JSON.stringify(newUser));
+                window.location.href = 'dashboard.html';
+            }, 1000);
         });
 
         document.querySelectorAll('input').forEach(input => {
             input.addEventListener('input', () => {
                 input.classList.remove('error');
-                const errorId = input.id + 'Error';
-                const errorElement = document.getElementById(errorId);
-                if (errorElement) errorElement.classList.remove('show');
+                const err = document.getElementById(input.id + 'Error');
+                if (err) err.classList.remove('show');
             });
         });
     </script>
